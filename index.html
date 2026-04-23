@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>সোনার পঞ্জিকা | Shonar Ponjika — Bangla Calendar</title>
+    <meta name="description" content="A premium Bangla Calendar with English dates, festivals, and cultural events.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="theme-color" content="#ff8c00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="সোনার পঞ্জিকা">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+    <!-- Splash Screen -->
+    <div id="splash" class="splash-screen">
+        <div class="splash-content">
+            <img src="icon.png" alt="Shonar Ponjika" class="splash-logo">
+            <div class="splash-title">সোনার পঞ্জিকা</div>
+            <div class="splash-loader"></div>
+            <div class="splash-author">Created By Mirjan Ali Sha</div>
+        </div>
+    </div>
+
+    <div id="app" class="hidden">
+        <header>
+            <div class="brand">
+                <img src="icon.png" alt="সোনার পঞ্জিকা" class="brand-icon">
+                <div>
+                    <h1>সোনার পঞ্জিকা</h1>
+                    <!-- <p style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.8;">Shonar Ponjika — Bangla Heritage Calendar</p>
+                    <p id="appVersion" style="font-size: 0.6rem; color: var(--text-secondary); opacity: 0.4; margin-top: 2px;">Version 1.0.0</p> -->
+                </div>
+            </div>
+
+            <div class="header-right-btns">
+                <button class="nav-btn" id="todayBtn" title="আজ"><i data-lucide="calendar"></i></button>
+                <div class="goto-wrapper">
+                    <button class="nav-btn" id="searchBtn" title="তারিখ নির্বাচন করুন"><i data-lucide="search"></i></button>
+                    <input type="date" class="goto-input" id="gotoDateInput">
+                </div>
+            </div>
+        </header>
+
+        <div class="month-selector-bar">
+            <button class="nav-btn" id="prevBtn" title="পূর্ববর্তী মাস"><i data-lucide="chevron-left"></i></button>
+            <div class="current-month-display">
+                <h2 id="currentMonthBn" class="current-month-bn">বৈশাখ ১৪৩৩</h2>
+                <p id="currentMonthEn" class="current-month-en">April - May 2026</p>
+            </div>
+            <button class="nav-btn" id="nextBtn" title="পরবর্তী মাস"><i data-lucide="chevron-right"></i></button>
+        </div>
+
+        <main class="calendar-card">
+            <div class="weekdays">
+                <div class="weekday">রবি</div>
+                <div class="weekday">সোম</div>
+                <div class="weekday">মঙ্গল</div>
+                <div class="weekday">বুধ</div>
+                <div class="weekday">বৃহস্পতি</div>
+                <div class="weekday">শুক্র</div>
+                <div class="weekday">শনি</div>
+            </div>
+            <div id="daysGrid" class="days-grid">
+                <!-- Days will be injected here -->
+            </div>
+        </main>
+
+        <aside class="events-sidebar">
+            <section>
+                <h2 class="section-title">আসন্ন অনুষ্ঠান</h2>
+                <div id="eventList" class="event-list">
+                    <!-- Events will be injected here -->
+                </div>
+            </section>
+
+            <section class="converter-card">
+                <h2 class="section-title">তারিখ রূপান্তর</h2>
+                <div class="input-group">
+                    <label for="gDateInput">ইংরেজি তারিখ নির্বাচন করুন</label>
+                    <input type="date" id="gDateInput">
+                </div>
+                <div id="conversionResult" style="font-weight: 500; color: var(--bengal-saffron); text-align: center;">
+                    <!-- Result here -->
+                </div>
+            </section>
+        </aside>
+
+        <!-- PWA Update Banner -->
+        <div id="updateBanner" class="update-banner">
+            <div class="update-content">
+                <i data-lucide="sparkles"></i>
+                <span>নতুন সংস্করণ উপলব্ধ!</span>
+            </div>
+            <button id="updateBtn" class="update-btn">রিফ্রেশ করুন</button>
+        </div>
+
+        <footer class="app-footer">
+            <p>Shonar Ponjika — Bangla Heritage Calendar</p>
+            <p id="footerVersion">v1.2.2</p>
+            <p class="creator">Created by <span>Mirjan Ali Sha</span></p>
+        </footer>
+    </div>
+
+    <!-- Date Details Modal -->
+    <div id="dateModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="closeModal"><i data-lucide="x"></i></button>
+            <div class="modal-header">
+                <h3 id="modalDateBn">১০ বৈশাখ ১৪৩৩</h3>
+                <p id="modalDateEn">২৪ এপ্রিল ২০২৬</p>
+            </div>
+            <div class="modal-body" id="modalEvents">
+                <!-- Events will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="version.js"></script>
+    <script src="calendar-logic.js"></script>
+    <script src="events.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Initialize static info
+        document.getElementById('appVersion').textContent = `v${VERSION_CONFIG.full}`;
+        document.getElementById('footerVersion').textContent = `v${VERSION_CONFIG.full}`;
+        
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => {
+                        console.log('[PWA] Service Worker Registered');
+                        
+                        // Detect updates
+                        reg.addEventListener('updatefound', () => {
+                            const newWorker = reg.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New version detected!
+                                    document.getElementById('updateBanner').classList.add('visible');
+                                }
+                            });
+                        });
+                    })
+                    .catch(err => console.error('[PWA] Service Worker registration failed', err));
+            });
+
+            // Handle Refresh
+            document.getElementById('updateBtn').addEventListener('click', () => {
+                window.location.reload();
+            });
+        }
+    </script>
+</body>
+</html>
