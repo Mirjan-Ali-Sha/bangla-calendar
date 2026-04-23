@@ -7,7 +7,7 @@
 const VERSION_CONFIG = {
     main: 1,
     major: 3,
-    minor: 0,
+    minor: 4,
     get full() {
         return `${this.main}.${this.major}.${this.minor}`;
     }

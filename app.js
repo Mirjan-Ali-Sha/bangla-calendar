@@ -86,13 +86,28 @@ function init() {
     // Set default date in input
     gDateInput.valueAsDate = new Date();
 
-    // Modal Close
-    closeModal.addEventListener('click', () => {
-        dateModal.classList.remove('active');
+    // Prevent immediate exit on back button when modal is open
+    window.addEventListener('popstate', (e) => {
+        if (dateModal.classList.contains('active')) {
+            dateModal.classList.remove('active');
+        }
     });
 
+    const closeDateModal = () => {
+        if (dateModal.classList.contains('active')) {
+            dateModal.classList.remove('active');
+            // If the user manually closes the modal, pop the history state to keep the stack clean
+            if (history.state && history.state.modal === 'dateModal') {
+                history.back();
+            }
+        }
+    };
+
+    // Modal Close
+    closeModal.addEventListener('click', closeDateModal);
+
     dateModal.addEventListener('click', (e) => {
-        if (e.target === dateModal) dateModal.classList.remove('active');
+        if (e.target === dateModal) closeDateModal();
     });
 }
 
@@ -177,10 +192,12 @@ function renderEvents() {
         const item = document.createElement('div');
         item.className = 'event-item';
         
-        const gDateStr = event.dateObj.toLocaleDateString('bn-BD', { day: 'numeric', month: 'long' });
+        // Show Bengali Date for the event correctly
+        const eventBnDate = getBengaliDate(event.dateObj);
+        const bnDateStr = `${toBengaliDigit(eventBnDate.day)} ${eventBnDate.month.bn}`;
         
         item.innerHTML = `
-            <div class="event-date">${gDateStr}</div>
+            <div class="event-date">${bnDateStr}</div>
             <div class="event-name-bn">${event.bn}</div>
             <div class="event-name-en">${event.name}</div>
         `;
@@ -208,7 +225,37 @@ function openDateModal(gDate, bDay, bMonth, bYear, events) {
     }
     
     dateModal.classList.add('active');
+    // Push a state to the history so the back button can be intercepted
+    history.pushState({ modal: 'dateModal' }, '');
 }
 
 // Start
 init();
+
+// PWA Install Logic
+let deferredPrompt;
+const installBanner = document.getElementById('installBanner');
+const installConfirm = document.getElementById('installConfirm');
+const installCancel = document.getElementById('installCancel');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (installBanner) installBanner.classList.remove('hidden');
+});
+
+if (installConfirm) {
+    installConfirm.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installBanner.classList.add('hidden');
+    });
+}
+
+if (installCancel) {
+    installCancel.addEventListener('click', () => {
+        installBanner.classList.add('hidden');
+    });
+}

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap');
 
 :root {
     --bengal-saffron: #ff8c00;
@@ -21,6 +21,7 @@
     --radius-lg: 1.5rem;
     
     --font-bn: 'Hind Siliguri', sans-serif;
+    --font-bn-num: 'Noto Sans Bengali', 'SolaimanLipi', sans-serif;
     --font-en: 'Inter', sans-serif;
     
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -427,10 +428,12 @@ header {
     min-width: 200px;
 }
 
-.current-month-bn {
-    font-size: 1.25rem;
-    font-weight: 600;
+#currentMonthBn {
     color: var(--bengal-saffron);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    font-family: var(--font-bn-num);
 }
 
 .current-month-en {
@@ -508,6 +511,7 @@ header {
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--text-primary);
+    font-family: var(--font-bn-num);
 }
 
 .day-e {
@@ -622,10 +626,11 @@ header {
 }
 
 .event-date {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: var(--bengal-saffron);
     font-weight: 600;
     margin-bottom: 4px;
+    font-family: var(--font-bn-num);
 }
 
 .event-name-bn {
@@ -740,8 +745,9 @@ input {
 }
 
 .modal-header h3 {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     color: var(--bengal-saffron);
+    font-family: var(--font-bn-num);
 }
 
 .modal-header p {
