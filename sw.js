@@ -13,7 +13,7 @@ const ASSETS_TO_CACHE = [
     './events.js',
     './app.js',
     './manifest.json',
-    './icon.png'
+    './icon.png',
     'https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap',
     'https://unpkg.com/lucide@latest'
 ];

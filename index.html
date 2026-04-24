@@ -38,6 +38,7 @@
             </div>
 
             <div class="header-right-btns">
+                <button class="nav-btn" id="settingsBtn" title="সেটিংস"><i data-lucide="settings"></i></button>
                 <button class="nav-btn" id="todayBtn" title="আজ"><i data-lucide="calendar"></i></button>
                 <div class="goto-wrapper">
                     <button class="nav-btn" id="searchBtn" title="তারিখ নির্বাচন করুন"><i data-lucide="search"></i></button>
@@ -75,6 +76,13 @@
                 <h2 class="section-title">আসন্ন অনুষ্ঠান</h2>
                 <div id="eventList" class="event-list">
                     <!-- Events will be injected here -->
+                </div>
+            </section>
+            
+            <section>
+                <h2 class="section-title">শুভ দিন ও ক্ষণ</h2>
+                <div id="auspiciousList" class="event-list">
+                    <!-- Auspicious days will be injected here -->
                 </div>
             </section>
 
@@ -122,12 +130,12 @@
     </div>
 
     <!-- Date Details Modal -->
-    <div id="dateModal" class="modal-overlay">
+    <div id="dateModal" class="modal hidden">
         <div class="modal-content">
-            <button class="modal-close" id="closeModal"><i data-lucide="x"></i></button>
             <div class="modal-header">
-                <h3 id="modalDateBn">১০ বৈশাখ ১৪৩৩</h3>
-                <p id="modalDateEn">২৪ এপ্রিল ২০২৬</p>
+                <h3 id="modalDateBn"></h3>
+                <p id="modalDateEn"></p>
+                <button class="modal-close" id="closeModal"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body" id="modalEvents">
                 <!-- Events will be injected here -->
@@ -135,44 +143,64 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>সেটিংস ও থিম</h2>
+                <button class="modal-close" id="closeSettingsModal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="theme-selector">
+                    <h3>থিম নির্বাচন করুন</h3>
+                    <div class="theme-grid">
+                        <div class="theme-option" data-theme="default">
+                            <div class="theme-preview" style="background: linear-gradient(135deg, #ff8c00, #006b3f)"></div>
+                            <span>সানসেট (ডিফল্ট)</span>
+                        </div>
+                        <div class="theme-option" data-theme="royal">
+                            <div class="theme-preview" style="background: linear-gradient(135deg, #1e3a8a, #d97706)"></div>
+                            <span>রয়্যাল ব্লু</span>
+                        </div>
+                        <div class="theme-option" data-theme="emerald">
+                            <div class="theme-preview" style="background: linear-gradient(135deg, #059669, #dc2626)"></div>
+                            <span>এমারেল্ড প্রাইড</span>
+                        </div>
+                        <div class="theme-option" data-theme="purple">
+                            <div class="theme-preview" style="background: linear-gradient(135deg, #7c3aed, #db2777)"></div>
+                            <span>ডিপ পার্পল</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="version.js"></script>
-    <script src="calendar-logic.js"></script>
     <script src="events.js"></script>
     <script src="app.js"></script>
     <script>
-        // Initialize static info
-        document.getElementById('footerVersion').textContent = `v${VERSION_CONFIG.full}`;
-        
-        // Initialize Lucide icons
-        lucide.createIcons();
+        // Initialize PWA logic after scripts load
+        window.addEventListener('load', () => {
+            if (window.VERSION_CONFIG) {
+                const fv = document.getElementById('footerVersion');
+                if (fv) fv.textContent = `v${VERSION_CONFIG.full}`;
+            }
 
-        // Register Service Worker for PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => {
-                        console.log('[PWA] Service Worker Registered');
-                        
-                        // Detect updates
-                        reg.addEventListener('updatefound', () => {
-                            const newWorker = reg.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // New version detected!
-                                    document.getElementById('updateBanner').classList.add('visible');
-                                }
-                            });
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                document.getElementById('updateBanner').classList.add('visible');
+                            }
                         });
-                    })
-                    .catch(err => console.error('[PWA] Service Worker registration failed', err));
-            });
-
-            // Handle Refresh
-            document.getElementById('updateBtn').addEventListener('click', () => {
-                window.location.reload();
-            });
-        }
+                    });
+                });
+            }
+        });
     </script>
 </body>
 </html>

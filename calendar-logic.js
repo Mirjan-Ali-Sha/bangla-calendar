@@ -21,7 +21,11 @@ const BENGALI_MONTHS = [
 const BENGALI_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
 
 function toBengaliDigit(number) {
-    return number.toString().split('').map(digit => BENGALI_DIGITS[parseInt(digit)] || digit).join('');
+    if (number === null || number === undefined) return '';
+    return number.toString().split('').map(digit => {
+        const d = parseInt(digit);
+        return isNaN(d) ? digit : BENGALI_DIGITS[d];
+    }).join('');
 }
 
 function isLeapYear(year) {
@@ -30,7 +34,7 @@ function isLeapYear(year) {
 
 /**
  * Converts Gregorian date to Bengali date
- * Logic: Boishakh 1 starts on April 14
+ * Logic: Boishakh 1 starts on April 15 (Traditional Panjika)
  */
 function getBengaliDate(date) {
     const d = new Date(date);
@@ -39,13 +43,13 @@ function getBengaliDate(date) {
     let gYear = d.getFullYear();
 
     let bYear = gYear - 593;
-    if (gMonth < 4 || (gMonth === 4 && gDay < 14)) {
+    if (gMonth < 4 || (gMonth === 4 && gDay < 15)) {
         bYear -= 1;
     }
 
     // Days since Baishakh 1 (April 14)
     // We calculate from April 14 of the current/previous Gregorian year
-    const startOfBengaliYear = new Date(gYear, 3, 14); // April 14
+    const startOfBengaliYear = new Date(gYear, 3, 15); // April 15
     if (d < startOfBengaliYear) {
         startOfBengaliYear.setFullYear(gYear - 1);
     }
@@ -89,9 +93,9 @@ function getBengaliMonthDays(bYear, bMonthIndex) {
     // We'll find the Gregorian date for the 1st of this Bengali month.
     
     // First, find the Gregorian year associated with this Bengali month
-    // Baishakh 1st is always April 14 of (bYear + 593)
+    // Baishakh 1st is always April 15 of (bYear + 593)
     let gYear = bYear + 593;
-    let targetDate = new Date(gYear, 3, 14); // April 14
+    let targetDate = new Date(gYear, 3, 15); // April 15
 
     // Traverse months to find the 1st day of the target month
     for (let i = 0; i < bMonthIndex; i++) {

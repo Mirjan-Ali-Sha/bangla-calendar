@@ -10,6 +10,7 @@ const daysGrid = document.getElementById('daysGrid');
 const monthBn = document.getElementById('currentMonthBn');
 const monthEn = document.getElementById('currentMonthEn');
 const eventList = document.getElementById('eventList');
+const auspiciousList = document.getElementById('auspiciousList');
 const gDateInput = document.getElementById('gDateInput'); // The one in converter
 const gotoDateInput = document.getElementById('gotoDateInput'); // The new one in header
 const conversionResult = document.getElementById('conversionResult');
@@ -25,10 +26,10 @@ const modalDateBn = document.getElementById('modalDateBn');
 const modalDateEn = document.getElementById('modalDateEn');
 const modalEvents = document.getElementById('modalEvents');
 
-function init() {
-    renderCalendar();
 
-    // Splash Screen Exit
+
+function init() {
+    // Splash Screen Exit (Move to top for robustness)
     const splash = document.getElementById('splash');
     const app = document.getElementById('app');
     
@@ -39,9 +40,11 @@ function init() {
             setTimeout(() => {
                 splash.style.display = 'none';
             }, 800);
-        }, 1500);
+        }, 1200);
     }
-    
+
+    renderCalendar();
+
     // Event Listeners
     gotoDateInput.addEventListener('change', (e) => {
         const selectedDate = new Date(e.target.value);
@@ -86,17 +89,10 @@ function init() {
     // Set default date in input
     gDateInput.valueAsDate = new Date();
 
-    // Prevent immediate exit on back button when modal is open
-    window.addEventListener('popstate', (e) => {
-        if (dateModal.classList.contains('active')) {
-            dateModal.classList.remove('active');
-        }
-    });
-
     const closeDateModal = () => {
         if (dateModal.classList.contains('active')) {
             dateModal.classList.remove('active');
-            // If the user manually closes the modal, pop the history state to keep the stack clean
+            dateModal.classList.add('hidden');
             if (history.state && history.state.modal === 'dateModal') {
                 history.back();
             }
@@ -153,7 +149,7 @@ function renderCalendar() {
             dayDiv.classList.add('has-event');
         }
 
-        const monthStyles = day.gDate.getDate() === 1 ? 'color: var(--bengal-saffron); font-weight: bold;' : '';
+        const monthStyles = day.gDate.getDate() === 1 ? 'color: var(--primary-color); font-weight: bold;' : '';
         const monthShort = day.gDate.toLocaleString('en-GB', { month: 'short' });
 
         dayDiv.innerHTML = `
@@ -172,7 +168,90 @@ function renderCalendar() {
     });
 
     renderEvents();
+    renderAuspiciousDates();
     if (window.lucide) window.lucide.createIcons();
+}
+
+function renderAuspiciousDates() {
+    if (!auspiciousList) return;
+    auspiciousList.innerHTML = '';
+    
+    // 1. Show Today's Khans (Auspicious Timings) at the top
+    const today = new Date();
+    const timings = PanjikaEngine.getDayAuspiciousTimings(today);
+    
+    const timingsGroup = document.createElement('div');
+    timingsGroup.className = 'shubh-group';
+    timingsGroup.innerHTML = `<h3 class="shubh-group-title" style="color: var(--accent-color)">আজকের বিশেষ ক্ষণ</h3>`;
+    
+    const timingsList = document.createElement('div');
+    timingsList.className = 'shubh-group-items';
+    timings.forEach(t => {
+        const row = document.createElement('div');
+        row.className = 'shubh-row';
+        row.style.borderLeft = t.name.includes('অমৃত') || t.name.includes('মাহেন্দ্র') ? '2px solid var(--accent-color)' : '2px solid var(--text-muted)';
+        row.innerHTML = `
+            <span class="shubh-date-bullet" style="font-size: 0.8rem; width: auto; padding-right: 5px;">${t.name}</span>
+            <span class="shubh-time-text">${toBengaliDigit(t.range)}</span>
+        `;
+        timingsList.appendChild(row);
+    });
+    timingsGroup.appendChild(timingsList);
+    auspiciousList.appendChild(timingsGroup);
+
+    // 2. Show Month's Shubh Dates
+    
+    // Anchor Shubh Section to the currently viewed BENGALI month
+    const bDate = getBengaliDate(currentViewDate);
+    const shubhDates = PanjikaEngine.getAuspiciousDates(bDate.year, bDate.monthIndex);
+
+    if (shubhDates.length === 0) {
+        auspiciousList.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; padding: 0.5rem 0;">এই মাসে কোন শুভক্ষণ নেই</p>';
+        return;
+    }
+
+    const groups = {};
+    shubhDates.forEach(sd => {
+        if (!groups[sd.category]) groups[sd.category] = [];
+        groups[sd.category].push(sd);
+    });
+
+    Object.keys(groups).forEach(cat => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'shubh-group';
+        
+        const titleBn = document.createElement('h3');
+        titleBn.textContent = cat;
+        titleBn.className = 'shubh-group-title';
+        groupDiv.appendChild(titleBn);
+
+        const listDiv = document.createElement('div');
+        listDiv.className = 'shubh-group-items';
+
+        groups[cat].forEach(sd => {
+            const row = document.createElement('div');
+            row.className = 'shubh-row';
+            
+            const dateBn = toBengaliDigit(sd.bDay);
+            const timeBn = toBengaliDigit(sd.time);
+
+            row.innerHTML = `
+                <span class="shubh-date-bullet">${dateBn}</span>
+                <span class="shubh-time-text">(${timeBn})</span>
+            `;
+            
+            row.onclick = () => {
+                currentViewDate = new Date(sd.gYear, sd.gMonth, sd.gDay);
+                renderCalendar();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            listDiv.appendChild(row);
+        });
+
+        groupDiv.appendChild(listDiv);
+        auspiciousList.appendChild(groupDiv);
+    });
 }
 
 function renderEvents() {
@@ -209,25 +288,133 @@ function openDateModal(gDate, bDay, bMonth, bYear, events) {
     modalDateBn.textContent = `${toBengaliDigit(bDay)} ${bMonth} ${toBengaliDigit(bYear)}`;
     modalDateEn.textContent = gDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     
-    modalEvents.innerHTML = '';
-    if (events.length > 0) {
-        events.forEach(ev => {
-            const evDiv = document.createElement('div');
-            evDiv.className = 'modal-event-item';
-            evDiv.innerHTML = `
-                <div class="modal-event-name-bn">${ev.bn}</div>
-                <div style="font-size: 0.8rem; color: var(--text-secondary); opacity: 0.8;">${ev.name}</div>
-            `;
-            modalEvents.appendChild(evDiv);
-        });
-    } else {
-        modalEvents.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 1rem;">এই দিনে কোন বিশেষ অনুষ্ঠান নেই</p>';
-    }
+    // Panjika Details
+    const panjika = PanjikaEngine.getPanjikaDetails(gDate);
     
+    const renderSegments = (title, segments) => {
+        if (!segments || segments.length === 0) return '';
+        return `
+            <div class="panjika-section">
+                <div class="panjika-section-header">
+                    <i data-lucide="sparkles"></i>
+                    <span>${title}</span>
+                </div>
+                <div class="panjika-segments">
+                    ${segments.map(s => `
+                        <div class="panjika-segment-item">
+                            <span class="seg-name">${s.name}</span>
+                            <span class="seg-time">${s.range}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    };
+
+    const groups = {
+        tithi: panjika.segments.tithi,
+        nakshatra: panjika.segments.nakshatra,
+        yoga: panjika.segments.yoga,
+        karana: panjika.segments.karana,
+        auspicious: PanjikaEngine.getDayAuspiciousTimings(gDate)
+    };
+
+    modalEvents.innerHTML = `
+        <div class="sun-times-header">
+            <div class="sun-item">
+                <i data-lucide="sun"></i>
+                <span>সূর্যোদয়: ${panjika.sun.sunrise}</span>
+            </div>
+            <div class="sun-item">
+                <i data-lucide="moon"></i>
+                <span>সূর্যাস্ত: ${panjika.sun.sunset}</span>
+            </div>
+        </div>
+
+        <div class="panjika-details">
+            ${renderSegments('তিথি', groups.tithi)}
+            ${renderSegments('নক্ষত্র', groups.nakshatra)}
+            ${renderSegments('যোগ', groups.yoga)}
+            ${renderSegments('করণ', groups.karana)}
+            ${renderSegments('শুভ মুহূর্ত ও কালবেলা', groups.auspicious)}
+        </div>
+        
+        <div class="modal-events-list">
+            <h4 class="events-title">আজকের অনুষ্ঠান</h4>
+            ${events.length > 0 
+                ? events.map(ev => `
+                    <div class="modal-event-item">
+                        <div class="modal-event-name-bn">${ev.bn}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); opacity: 0.8;">${ev.name}</div>
+                    </div>
+                `).join('')
+                : '<p style="text-align: center; color: var(--text-muted); padding: 1rem;">এই দিনে কোন বিশেষ অনুষ্ঠান নেই</p>'
+            }
+        </div>
+    `;
+    
+    dateModal.classList.remove('hidden');
     dateModal.classList.add('active');
-    // Push a state to the history so the back button can be intercepted
+    if (window.lucide) window.lucide.createIcons();
     history.pushState({ modal: 'dateModal' }, '');
 }
+
+// Settings & Theme Logic
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsModal = document.getElementById('settingsModal');
+const closeSettingsModal = document.getElementById('closeSettingsModal');
+const themeOptions = document.querySelectorAll('.theme-option');
+
+// Load saved theme
+const savedTheme = localStorage.getItem('panjika-theme') || 'default';
+document.documentElement.setAttribute('data-theme', savedTheme);
+themeOptions.forEach(opt => {
+    if (opt.getAttribute('data-theme') === savedTheme) opt.classList.add('active');
+});
+
+if (settingsBtn) {
+    settingsBtn.onclick = () => {
+        settingsModal.classList.remove('hidden');
+        settingsModal.classList.add('active');
+        history.pushState({ modal: 'settingsModal' }, '');
+    };
+}
+
+if (closeSettingsModal) {
+    closeSettingsModal.onclick = () => {
+        settingsModal.classList.remove('active');
+        setTimeout(() => settingsModal.classList.add('hidden'), 300);
+        if (history.state?.modal === 'settingsModal') history.back();
+    };
+}
+
+themeOptions.forEach(opt => {
+    opt.onclick = () => {
+        const theme = opt.getAttribute('data-theme');
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('panjika-theme', theme);
+        
+        themeOptions.forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+        
+        // Auto close after small delay
+        setTimeout(() => {
+            settingsModal.classList.remove('active');
+            setTimeout(() => settingsModal.classList.add('hidden'), 300);
+            if (history.state?.modal === 'settingsModal') history.back();
+        }, 500);
+    };
+});
+
+// Update modal popstate handling
+window.onpopstate = (event) => {
+    if (!event.state || !event.state.modal) {
+        dateModal.classList.remove('active');
+        settingsModal.classList.remove('active');
+        dateModal.classList.add('hidden');
+        settingsModal.classList.add('hidden');
+    }
+};
 
 // Start
 init();
