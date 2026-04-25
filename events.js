@@ -27,9 +27,34 @@ function toBengaliDigit(num) {
 }
 
 function getBengaliDate(gDate) {
-    const refGDate = new Date(2024, 3, 14); // April 14, 2024 is Poila Boishakh 1431
-    const diffDays = Math.floor((gDate - refGDate) / (1000 * 60 * 60 * 24));
-    let bYear = 1431, bMonthIndex = 0, bDay = 1, remainingDays = diffDays;
+    // Shonar Ponjika Engine v2.0 - Sunrise-to-Sunrise Implementation
+    // Bengali Day changes at Sunrise (~6:00 AM)
+    const shiftedDate = new Date(gDate.getTime() - (6 * 60 * 60 * 1000));
+    
+    // Reference points:
+    // 1431: April 14, 2024
+    // 1432: April 14, 2025
+    // 1433: April 15, 2026 (Shifted due to Surjasiddhanta / Prokerala calculations)
+    
+    let refGDate = new Date(2024, 3, 14); // Default 1431
+    let baseYear = 1431;
+
+    const currentGYear = shiftedDate.getFullYear();
+    if (currentGYear === 2026) {
+        refGDate = new Date(2026, 3, 15); // April 15, 2026
+        baseYear = 1433;
+    } else if (currentGYear === 2025) {
+        refGDate = new Date(2025, 3, 14);
+        baseYear = 1432;
+    }
+
+    const diffDays = Math.floor((shiftedDate.setHours(0,0,0,0) - refGDate.setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+    
+    let bYear = baseYear;
+    let bMonthIndex = 0;
+    let bDay = 1;
+    let remainingDays = diffDays;
+
     if (remainingDays >= 0) {
         while (true) {
             const daysInMonth = (bMonthIndex === 10 && isLeapYear(bYear + 593)) ? 31 : BENGALI_MONTHS[bMonthIndex].days;
@@ -50,8 +75,14 @@ function getBengaliDate(gDate) {
 }
 
 function getBengaliMonthDays(bYear, bMonthIndex) {
-    let gDate = new Date(2024, 3, 14);
-    let curY = 1431, curM = 0;
+    // Anchor to the adjusted reference
+    let gDate;
+    if (bYear === 1433) gDate = new Date(2026, 3, 15);
+    else if (bYear === 1432) gDate = new Date(2025, 3, 14);
+    else gDate = new Date(2024, 3, 14);
+    
+    let curY = (bYear === 1433) ? 1433 : (bYear === 1432 ? 1432 : 1431), curM = 0;
+    
     while (curY < bYear || (curY === bYear && curM < bMonthIndex)) {
         const d = (curM === 10 && isLeapYear(curY + 593)) ? 31 : BENGALI_MONTHS[curM].days;
         gDate.setDate(gDate.getDate() + d);
@@ -203,25 +234,25 @@ const PanjikaEngine = {
 
     getPanjikaDetails: function(date) {
         const segments = { tithi: [], nakshatra: [], yoga: [], karana: [] };
-        const dayStart = new Date(date);
-        dayStart.setHours(0, 0, 0, 0);
+        
+        // Start scanning from Sunrise (6:00 AM) of the target day
+        const dayBreak = new Date(date);
+        dayBreak.setHours(6, 0, 0, 0);
 
-        const scanLimit = 24 * 60 + 1440; 
+        const scanLimit = 1440; // 24 hours from daybreak
         let lastState = null;
 
         for (let m = 0; m <= scanLimit; m += 15) {
-            const scanTime = new Date(dayStart.getTime() + m * 60000);
+            const scanTime = new Date(dayBreak.getTime() + m * 60000);
             const state = this.getInstantState(scanTime);
             
+            const timeStr = this.formatTime(scanTime);
             if (!lastState) {
-                if (m < 1440) {
-                    segments.tithi.push({ name: state.tithi, startTime: "রাত ১২:০০", m });
-                    segments.nakshatra.push({ name: state.nakshatra, startTime: "রাত ১২:০০", m });
-                    segments.yoga.push({ name: state.yoga, startTime: "রাত ১২:০০", m });
-                    segments.karana.push({ name: state.karana, startTime: "রাত ১২:০০", m });
-                }
+                segments.tithi.push({ name: state.tithi, startTime: "সূর্যোদয় ০৬:০০", m });
+                segments.nakshatra.push({ name: state.nakshatra, startTime: "সূর্যোদয় ০৬:০০", m });
+                segments.yoga.push({ name: state.yoga, startTime: "সূর্যোদয় ০৬:০০", m });
+                segments.karana.push({ name: state.karana, startTime: "সূর্যোদয় ০৬:০০", m });
             } else {
-                const timeStr = this.formatTime(scanTime);
                 if (state.tithi !== lastState.tithi) this.handleTransition(segments.tithi, state.tithi, timeStr, m);
                 if (state.nakshatra !== lastState.nakshatra) this.handleTransition(segments.nakshatra, state.nakshatra, timeStr, m);
                 if (state.yoga !== lastState.yoga) this.handleTransition(segments.yoga, state.yoga, timeStr, m);
@@ -231,13 +262,11 @@ const PanjikaEngine = {
         }
 
         const formatSegments = (list) => {
-            return list.filter(s => s.m < 1440).map((s, idx) => {
+            return list.map((s, idx) => {
                 const next = list[idx + 1];
                 let rangeText = "";
                 if (next) {
-                    let endStr = next.startTime;
-                    if (next.m >= 1440) endStr = "রাত ১২:০০+";
-                    rangeText = `${s.startTime} থেকে ${endStr} পর্যন্ত`;
+                    rangeText = `${s.startTime} থেকে ${next.startTime} পর্যন্ত`;
                 } else {
                     rangeText = `${s.startTime} থেকে চলছে`;
                 }
@@ -457,6 +486,10 @@ function getEventsForDate(date, bDate) {
 
 // Helper to get raw rule for UI listings
 function getUpcomingEvents(startDate, days = 60) {
+    const getLocalDateStr = (d) => {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
     // This is more complex for a detection engine because we have to iterate
     const upcoming = [];
     for (let i = 0; i < days; i++) {
@@ -464,10 +497,11 @@ function getUpcomingEvents(startDate, days = 60) {
         d.setDate(d.getDate() + i);
         const b = getBengaliDate(d);
         const evs = getEventsForDate(d, b);
+        const dStr = getLocalDateStr(d);
         evs.forEach(e => {
-            upcoming.push({ ...e, dateObj: d });
+            upcoming.push({ ...e, dateObj: d, dateStr: dStr });
         });
     }
     // Remove duplicates found on same day
-    return upcoming.filter((v, i, a) => a.findIndex(t => (t.name === v.name && t.dateObj.getTime() === v.dateObj.getTime())) === i);
+    return upcoming.filter((v, i, a) => a.findIndex(t => (t.name === v.name && t.dateStr === v.dateStr)) === i);
 }

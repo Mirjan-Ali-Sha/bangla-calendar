@@ -3,10 +3,10 @@
  * Used for cache busting and update notifications.
  */
 
-const VERSION_CONFIG = {
+var VERSION_CONFIG = {
     main: 1,
-    major: 7,
-    minor: 7,
+    major: 8,
+    minor: 8,
     get full() {
         return `${this.main}.${this.major}.${this.minor}`;
     }

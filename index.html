@@ -16,14 +16,20 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+<body>
     <!-- Splash Screen -->
     <div id="splash" class="splash-screen">
-        <div class="splash-content">
-            <img src="icon.png" alt="Shonar Ponjika" class="splash-logo">
-            <div class="splash-title">সোনার পঞ্জিকা</div>
-            <div class="splash-loader"></div>
-            <div class="splash-author">Created By Mirjan Ali Sha</div>
+        <div class="splash-logo-container">
+            <img src="icon.png" alt="Logo" class="splash-logo">
+            <div class="splash-glow"></div>
         </div>
+        <h1 class="splash-title">সোনার পঞ্জিকা</h1>
+        <p class="splash-subtitle">ঐতিহ্য ও আধুনিকতার মেলবন্ধন</p>
+        <p class="sunrise-notice" style="margin-top: 1rem; font-size: 0.8rem; opacity: 0.8; color: var(--accent-light);">সূর্যোদয়-ভিত্তিতে তারিখ পরিবর্তন কার্যকর (Sunrise-to-Sunrise Rule)</p>
+        <div class="loading-bar" style="margin-top: 1.5rem">
+            <div class="loading-progress"></div>
+        </div>
+        <p style="margin-top: 2rem; font-size: 0.85rem; color: var(--text-secondary); letter-spacing: 0.05rem; opacity: 0.6">Created By Mirjan Ali Sha</p>
     </div>
 
     <div id="app" class="hidden">
@@ -122,11 +128,11 @@
             <button id="updateBtn" class="update-btn">রিফ্রেশ করুন</button>
         </div>
 
-        <footer class="app-footer">
-            <p>Shonar Ponjika — Bangla Heritage Calendar</p>
-            <p id="footerVersion">v1.3.4</p>
-            <p class="creator">Created by <span>Mirjan Ali Sha</span></p>
-        </footer>
+    <footer class="app-footer">
+        <p>সোনার পঞ্জিকা — <span id="footerVersion">v...</span></p>
+        <p style="font-size: 0.75rem; opacity: 0.8; margin-top: 4px;">সূর্যোদয়-ভিত্তিতে তারিখ রূপান্তরিত (Sunrise-to-Sunrise Rule)</p>
+        <p class="creator">Created By <span>Mirjan Ali Sha</span></p>
+    </footer>
     </div>
 
     <!-- Date Details Modal -->
@@ -183,10 +189,14 @@
     <script>
         // Initialize PWA logic after scripts load
         window.addEventListener('load', () => {
+            // Update version immediately from the global config
             if (window.VERSION_CONFIG) {
                 const fv = document.getElementById('footerVersion');
-                if (fv) fv.textContent = `v${VERSION_CONFIG.full}`;
+                if (fv) fv.textContent = `v${window.VERSION_CONFIG.full}`;
             }
+
+            // Call the main app initialization
+            if (typeof init === 'function') init();
 
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js').then(reg => {

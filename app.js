@@ -29,6 +29,12 @@ const modalEvents = document.getElementById('modalEvents');
 
 
 function init() {
+    // Dynamic Versioning from version.js
+    if (window.VERSION_CONFIG) {
+        const footerVer = document.getElementById('footerVersion');
+        if (footerVer) footerVer.textContent = `v${VERSION_CONFIG.full}`;
+    }
+
     // Splash Screen Exit (Move to top for robustness)
     const splash = document.getElementById('splash');
     const app = document.getElementById('app');
@@ -132,17 +138,31 @@ function renderCalendar() {
         daysGrid.appendChild(emptyDiv);
     }
 
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    // Helper for local YYYY-MM-DD
+    const getLocalDateStr = (d) => {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    // Consistent "Today" with Sunrise Rule
+    const now = new Date();
+    const shiftedNow = new Date(now.getTime() - (6 * 60 * 60 * 1000));
+    const todayStr = getLocalDateStr(shiftedNow);
 
     // Render Days
     days.forEach(day => {
         const dayDiv = document.createElement('div');
+        const dStr = getLocalDateStr(day.gDate);
         const bDateForDay = { day: day.bDay, monthIndex: bDate.monthIndex, year: bDate.year };
-        const events = getEventsForDate(day.gDate, bDateForDay);
+        
+        // Calculate events for Sunrise (6 AM) of this Bengali day to ensure Tithi alignment
+        const sunriseDate = new Date(day.gDate);
+        sunriseDate.setHours(6, 0, 0, 0);
+        const events = getEventsForDate(sunriseDate, bDateForDay);
         
         dayDiv.className = 'day';
-        if (day.gDate.toISOString().split('T')[0] === todayStr) {
+        dayDiv.setAttribute('data-date', dStr);
+
+        if (dStr === todayStr) {
             dayDiv.classList.add('today');
         }
         if (events.length > 0) {
