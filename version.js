@@ -6,7 +6,7 @@
 var VERSION_CONFIG = {
     main: 1,
     major: 9,
-    minor: 2,
+    minor: 4,
     get full() {
         return `${this.main}.${this.major}.${this.minor}`;
     }

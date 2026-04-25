@@ -2,6 +2,80 @@
  * Shonar Ponjika — Bangla Event Detection & Calendar Engine
  */
 
+// Global Configuration
+var BENGALI_MONTH_OFFSETS = JSON.parse(localStorage.getItem('bengali-month-offsets')) || {};
+var BENGALI_SYSTEM = localStorage.getItem('panjika-system') || 'solar'; // 'solar' | 'fixed'
+
+// Astronomical Sun Engine for Surya Siddhanta calculations
+const SuryaSiddhantaEngine = {
+    // Get Nirayana Sidereal Solar Longitude (Approx Lahiri)
+    getSolarLongitude: function(date) {
+        const jd = (date.getTime() / 86400000) + 2440587.5;
+        const t = (jd - 2451545.0) / 36525.0; 
+        
+        let L0 = 280.46646 + 36000.76983 * t + 0.0003032 * t * t;
+        L0 = L0 % 360; if (L0 < 0) L0 += 360;
+        
+        let M = 357.52911 + 35999.05029 * t - 0.0001537 * t * t;
+        M = M % 360; if (M < 0) M += 360;
+        const M_rad = M * Math.PI / 180;
+        
+        const C = (1.914602 - 0.004817 * t) * Math.sin(M_rad) + (0.019993) * Math.sin(2 * M_rad);
+        let trueLong = (L0 + C) % 360; if (trueLong < 0) trueLong += 360;
+        
+        const ayanamsa = 23.85 + (jd - 2451545.0) * (50.290966 / 365.25 / 3600);
+        let siderealLong = (trueLong - ayanamsa) % 360;
+        if (siderealLong < 0) siderealLong += 360;
+        
+        return siderealLong;
+    },
+
+    getSankranti: function(gYear, rashiIndex) {
+        // Rashi 0 = Boishakh (~April), Month index 3.
+        const expectedMonth = (rashiIndex + 3) % 12; 
+        let expectedYear = gYear;
+        if (expectedMonth < 3) expectedYear++;
+        
+        let start = new Date(expectedYear, expectedMonth, 12).getTime();
+        let end = new Date(expectedYear, expectedMonth, 18).getTime();
+        const targetLong = rashiIndex * 30;
+        
+        for (let i = 0; i < 20; i++) {
+            const mid = (start + end) / 2;
+            let long = this.getSolarLongitude(new Date(mid));
+            if (targetLong === 0 && long > 180) long -= 360;
+            if (long > targetLong) end = mid;
+            else start = mid;
+        }
+        return new Date((start + end) / 2);
+    },
+
+    getMonthLength: function(bYear, bMonthIndex) {
+        // Cache to prevent lag on grid generation
+        const cacheKey = `${bYear}-${bMonthIndex}`;
+        if (this._cache[cacheKey]) return this._cache[cacheKey];
+
+        const gYearStart = bYear + 593;
+        const s1 = this.getSankranti(gYearStart, bMonthIndex);
+        
+        const nextMonthIndex = (bMonthIndex + 1) % 12;
+        let nextYearStart = gYearStart;
+        if (nextMonthIndex === 0) nextYearStart++;
+        
+        const s2 = this.getSankranti(nextYearStart, nextMonthIndex);
+        
+        // Bengal Rule: Sankranti to Sankranti, crossing midnight shifts to next day.
+        const d1 = new Date(s1.getTime() + 86400000); d1.setHours(0,0,0,0);
+        const d2 = new Date(s2.getTime() + 86400000); d2.setHours(0,0,0,0);
+        
+        const days = Math.round((d2 - d1) / 86400000);
+        this._cache[cacheKey] = days;
+        return days;
+    },
+    
+    _cache: {}
+};
+
 const BENGALI_MONTHS = [
     { bn: 'বৈশাখ', en: 'Boishakh', days: 31 },
     { bn: 'জ্যৈষ্ঠ', en: 'Jyaistha', days: 31 },
@@ -23,7 +97,20 @@ function isLeapYear(year) {
 
 function toBengaliDigit(num) {
     const digits = { '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪', '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯' };
+    if (num < 0) return '-' + String(Math.abs(num)).split('').map(d => digits[d] || d).join('');
     return String(num).split('').map(d => digits[d] || d).join('');
+}
+
+function getDaysInMonth(bYear, bMonthIndex) {
+    let days;
+    if (BENGALI_SYSTEM === 'solar') {
+        days = SuryaSiddhantaEngine.getMonthLength(bYear, bMonthIndex);
+    } else {
+        // Fallback: Fixed Bangladesh standard (with Falgun leap year check)
+        days = (bMonthIndex === 10 && isLeapYear(bYear + 593)) ? 31 : BENGALI_MONTHS[bMonthIndex].days;
+    }
+    const offset = BENGALI_MONTH_OFFSETS[`${bYear}-${bMonthIndex}`] || 0;
+    return days + offset;
 }
 
 function getBengaliDate(gDate) {
@@ -57,7 +144,7 @@ function getBengaliDate(gDate) {
 
     if (remainingDays >= 0) {
         while (true) {
-            const daysInMonth = (bMonthIndex === 10 && isLeapYear(bYear + 593)) ? 31 : BENGALI_MONTHS[bMonthIndex].days;
+            const daysInMonth = getDaysInMonth(bYear, bMonthIndex);
             if (remainingDays < daysInMonth) { bDay = remainingDays + 1; break; }
             remainingDays -= daysInMonth;
             bMonthIndex++; if (bMonthIndex > 11) { bMonthIndex = 0; bYear++; }
@@ -66,7 +153,7 @@ function getBengaliDate(gDate) {
         remainingDays = Math.abs(remainingDays);
         while (remainingDays > 0) {
             bMonthIndex--; if (bMonthIndex < 0) { bMonthIndex = 11; bYear--; }
-            const daysInMonth = (bMonthIndex === 10 && isLeapYear(bYear + 593)) ? 31 : BENGALI_MONTHS[bMonthIndex].days;
+            const daysInMonth = getDaysInMonth(bYear, bMonthIndex);
             if (remainingDays <= daysInMonth) { bDay = daysInMonth - remainingDays + 1; break; }
             remainingDays -= daysInMonth;
         }
@@ -75,7 +162,7 @@ function getBengaliDate(gDate) {
 }
 
 function getBengaliMonthDays(bYear, bMonthIndex) {
-    // Anchor to the adjusted reference
+    // Anchor to the reference
     let gDate;
     if (bYear === 1433) gDate = new Date(2026, 3, 15);
     else if (bYear === 1432) gDate = new Date(2025, 3, 14);
@@ -84,16 +171,17 @@ function getBengaliMonthDays(bYear, bMonthIndex) {
     let curY = (bYear === 1433) ? 1433 : (bYear === 1432 ? 1432 : 1431), curM = 0;
     
     while (curY < bYear || (curY === bYear && curM < bMonthIndex)) {
-        const d = (curM === 10 && isLeapYear(curY + 593)) ? 31 : BENGALI_MONTHS[curM].days;
+        const d = getDaysInMonth(curY, curM);
         gDate.setDate(gDate.getDate() + d);
         curM++; if (curM > 11) { curM = 0; curY++; }
     }
     while (curY > bYear || (curY === bYear && curM > bMonthIndex)) {
         curM--; if (curM < 0) { curM = 11; curY--; }
-        const d = (curM === 10 && isLeapYear(curY + 593)) ? 31 : BENGALI_MONTHS[curM].days;
+        const d = getDaysInMonth(curY, curM);
         gDate.setDate(gDate.getDate() - d);
     }
-    const daysInM = (bMonthIndex === 10 && isLeapYear(bYear + 593)) ? 31 : BENGALI_MONTHS[bMonthIndex].days;
+    
+    const daysInM = getDaysInMonth(bYear, bMonthIndex);
     const startDayOfWeek = gDate.getDay();
     const days = [];
     for (let i = 1; i <= daysInM; i++) {

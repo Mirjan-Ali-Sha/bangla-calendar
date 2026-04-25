@@ -466,6 +466,98 @@ themeOptions.forEach(opt => {
     };
 });
 
+// Calendar Adjustment Logic
+const adjMinus = document.getElementById('adjMinus');
+const adjPlus = document.getElementById('adjPlus');
+const adjValue = document.getElementById('adjValue');
+const adjStatus = document.getElementById('adjStatus');
+
+const updateAdjUI = () => {
+    // Current viewed month tag
+    const currentTag = `${currentViewBYear}-${currentViewBMonthIndex}`;
+    const offset = BENGALI_MONTH_OFFSETS[currentTag] || 0;
+    
+    adjValue.textContent = toBengaliDigit(Math.abs(offset));
+    if (offset > 0) {
+        adjValue.textContent = '+' + adjValue.textContent;
+        adjStatus.textContent = `${toBengaliDigit(offset)} দিন বর্ধিত`;
+    } else if (offset < 0) {
+        adjValue.textContent = '-' + toBengaliDigit(Math.abs(offset));
+        adjStatus.textContent = `${toBengaliDigit(Math.abs(offset))} দিন কমানো`;
+    } else {
+        adjStatus.textContent = 'স্বাভাবিক (Default)';
+    }
+};
+
+// Hook into calendar rendering to intercept UI updates when user transitions months
+const originalRenderCalendar = renderCalendar;
+renderCalendar = () => {
+    originalRenderCalendar();
+    if (adjMinus && adjPlus) updateAdjUI();
+};
+
+if (adjMinus && adjPlus) {
+    updateAdjUI();
+    
+    adjMinus.onclick = () => {
+        const currentTag = `${currentViewBYear}-${currentViewBMonthIndex}`;
+        let offset = BENGALI_MONTH_OFFSETS[currentTag] || 0;
+        if (offset > -2) {
+            offset--;
+            BENGALI_MONTH_OFFSETS[currentTag] = offset;
+            localStorage.setItem('bengali-month-offsets', JSON.stringify(BENGALI_MONTH_OFFSETS));
+            updateAdjUI();
+            renderCalendar();
+        }
+    };
+    
+    adjPlus.onclick = () => {
+        const currentTag = `${currentViewBYear}-${currentViewBMonthIndex}`;
+        let offset = BENGALI_MONTH_OFFSETS[currentTag] || 0;
+        if (offset < 2) {
+            offset++;
+            BENGALI_MONTH_OFFSETS[currentTag] = offset;
+            localStorage.setItem('bengali-month-offsets', JSON.stringify(BENGALI_MONTH_OFFSETS));
+            updateAdjUI();
+            renderCalendar();
+        }
+    };
+}
+
+// System Selector Logic
+const sysOptions = document.querySelectorAll('.sys-btn');
+const systemDesc = document.getElementById('systemDesc');
+
+if (sysOptions.length > 0) {
+    const updateSysUI = () => {
+        sysOptions.forEach(opt => {
+            if (opt.getAttribute('data-sys') === BENGALI_SYSTEM) {
+                opt.classList.add('active');
+                if (BENGALI_SYSTEM === 'solar') {
+                    systemDesc.textContent = 'সূর্যসিদ্ধান্ত অনুযায়ী গ্রহ-নক্ষত্রের অয়নকাল ভিত্তিক।';
+                } else {
+                    systemDesc.textContent = 'স্থির দিন-ভিত্তিতে গণনাকৃত (বাংলাদেশ স্ট্যান্ডার্ড)।';
+                }
+            } else {
+                opt.classList.remove('active');
+            }
+        });
+    };
+
+    updateSysUI();
+
+    sysOptions.forEach(opt => {
+        opt.onclick = () => {
+            BENGALI_SYSTEM = opt.getAttribute('data-sys');
+            localStorage.setItem('panjika-system', BENGALI_SYSTEM);
+            updateSysUI();
+            // Clear engine cache and re-render completely
+            if (typeof SuryaSiddhantaEngine !== 'undefined') SuryaSiddhantaEngine._cache = {};
+            renderCalendar();
+        };
+    });
+}
+
 // Update modal popstate handling
 window.onpopstate = (event) => {
     if (!event.state || !event.state.modal) {

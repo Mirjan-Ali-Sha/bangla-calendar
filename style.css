@@ -1360,3 +1360,28 @@ input {
 .shubh-row:hover { background: rgba(255,255,255,0.05); }
 .shubh-date-bullet { min-width: 24px; height: 24px; background: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; flex-shrink: 0; }
 .shubh-time-text { color: var(--text-primary); font-size: 0.85rem; line-height: 1.4; }
+
+/* Calendar Adjustment UI */
+.settings-divider { height: 1px; background: var(--border); margin: 1.5rem 0; opacity: 0.5; }
+.settings-desc { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.4; }
+.calendar-adjustment { padding: 0.5rem 0; }
+.adjustment-group { display: flex; align-items: center; justify-content: center; gap: 2.5rem; margin: 1.2rem 0; }
+.adj-btn { 
+    width: 44px; height: 44px; border-radius: 50%; 
+    border: 1px solid var(--border); 
+    background: rgba(255,255,255,0.05); 
+    color: var(--text-primary); 
+    display: flex; align-items: center; justify-content: center; 
+    cursor: pointer; transition: var(--transition); 
+}
+.adj-btn:hover { background: var(--surface-hover); border-color: var(--primary-color); }
+.adj-btn:active { transform: scale(0.9); }
+#adjValue { font-size: 1.75rem; font-weight: 700; min-width: 3rem; text-align: center; color: var(--primary-color); }
+.adj-tip { text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; }
+#adjStatus { color: var(--primary-color); font-weight: 600; }
+
+/* System Selector UI */
+.system-options { display: flex; gap: 1rem; margin-top: 1rem; }
+.sys-btn { flex: 1; padding: 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: rgba(255,255,255,0.03); color: var(--text-secondary); cursor: pointer; transition: var(--transition); font-family: var(--font-bn); font-size: 0.95rem; font-weight: 500; }
+.sys-btn:hover { background: rgba(255,255,255,0.08); border-color: var(--primary-color); }
+.sys-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); font-weight: 600; box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3); }

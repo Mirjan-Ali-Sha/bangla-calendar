@@ -178,6 +178,31 @@
                         </div>
                     </div>
                 </div>
+                </div>
+
+                <div class="settings-divider"></div>
+                
+                <div class="system-selector">
+                    <h3>পঞ্জিকা রীতি (Calculation System)</h3>
+                    <p class="settings-desc" id="systemDesc">সূর্যসিদ্ধান্ত অনুযায়ী গ্রহ-নক্ষত্রের অয়নকাল ভিত্তিক।</p>
+                    <div class="system-options">
+                        <button class="sys-btn" data-sys="fixed">স্থির (Fixed)</button>
+                        <button class="sys-btn active" data-sys="solar">Surya Siddhanta</button>
+                    </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <div class="calendar-adjustment">
+                    <h3>তারিখ সমন্বয় (Adjustment)</h3>
+                    <p class="settings-desc">আপনার এলাকার পঞ্জিকা অনুযায়ী ১-২ দিন কম-বেশি করতে পারেন।</p>
+                    <div class="adjustment-group">
+                        <button class="adj-btn" id="adjMinus"><i data-lucide="minus"></i></button>
+                        <span id="adjValue">০</span>
+                        <button class="adj-btn" id="adjPlus"><i data-lucide="plus"></i></button>
+                    </div>
+                    <div class="adj-tip">বর্তমান সমন্বয়: <span id="adjStatus">ঠিক আছে</span></div>
+                </div>
             </div>
         </div>
     </div>
