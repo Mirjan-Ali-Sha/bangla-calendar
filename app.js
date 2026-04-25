@@ -343,35 +343,6 @@ function renderAuspiciousDates() {
     });
 }
 
-function renderEvents() {
-    // Show events for the NEXT 90 days using the Detection Engine
-    eventList.innerHTML = '';
-    
-    // We pass today as start
-    const upcomingEvents = getUpcomingEvents(new Date(), 90)
-        .slice(0, 6); // Show top 6
-
-    if (upcomingEvents.length === 0) {
-        eventList.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">কোন আসন্ন অনুষ্ঠান নেই</p>';
-        return;
-    }
-
-    upcomingEvents.forEach(event => {
-        const item = document.createElement('div');
-        item.className = 'event-item';
-        
-        // Show Bengali Date for the event correctly
-        const eventBnDate = getBengaliDate(event.dateObj);
-        const bnDateStr = `${toBengaliDigit(eventBnDate.day)} ${eventBnDate.month.bn}`;
-        
-        item.innerHTML = `
-            <div class="event-date">${bnDateStr}</div>
-            <div class="event-name-bn">${event.bn}</div>
-            <div class="event-name-en">${event.name}</div>
-        `;
-        eventList.appendChild(item);
-    });
-}
 
 function openDateModal(gDate, bDay, bMonth, bYear, events) {
     modalDateBn.textContent = `${toBengaliDigit(bDay)} ${bMonth} ${toBengaliDigit(bYear)}`;
