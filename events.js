@@ -402,17 +402,24 @@ const PanjikaEngine = {
 const EVENT_RULES = [
     // --- Fixed Bengali Dates ---
     { name: 'Pohela Boishakh', bn: 'পহেলা বৈশাখ', type: 'FIXED_BN', bMonth: 0, bDay: 1, impact: 'major', category: 'cultural' },
+    { name: 'Basanti Puja Start', bn: 'বাসন্তী পূজা শুরু', type: 'LUNAR', bMonth: 0, tithi: 7, impact: 'medium', category: 'religious' },
+    { name: 'Annapurna Puja', bn: 'অন্নপূর্ণা পূজা', type: 'LUNAR', bMonth: 0, tithi: 8, impact: 'medium', category: 'religious' },
     { name: 'Akshaya Tritiya', bn: 'অক্ষয় তৃতীয়া', type: 'LUNAR', bMonth: 0, tithi: 3, impact: 'medium', category: 'religious' },
     { name: 'Buddha Purnima', bn: 'বুদ্ধ পূর্ণিমা', type: 'LUNAR', bMonth: 0, tithi: 15, impact: 'major', category: 'religious' },
     { name: 'Rabindra Jayanti', bn: 'রবীন্দ্র জয়ন্তী', type: 'FIXED_BN', bMonth: 0, bDay: 25, impact: 'medium', category: 'cultural' },
+    
     { name: 'Nazrul Jayanti', bn: 'নজরুল জয়ন্তী', type: 'FIXED_BN', bMonth: 1, bDay: 11, impact: 'medium', category: 'cultural' },
-    
     { name: 'Jamai Sashthi', bn: 'জামাই ষষ্ঠী', type: 'LUNAR', bMonth: 1, tithi: 6, impact: 'medium', category: 'cultural' },
-    { name: 'Rath Yatra', bn: 'রথযাত্রা', type: 'LUNAR', bMonth: 2, tithi: 2, impact: 'major', category: 'religious' },
-    { name: 'Rakhi Purnima', bn: 'রাখিপূর্ণিমা', type: 'LUNAR', bMonth: 3, tithi: 15, impact: 'medium', category: 'cultural' },
+    { name: 'Snana Yatra', bn: 'স্নানযাত্রা', type: 'LUNAR', bMonth: 2, tithi: 15, impact: 'medium', category: 'religious' },
     
+    { name: 'Rath Yatra', bn: 'রথযাত্রা', type: 'LUNAR', bMonth: 2, tithi: 2, impact: 'major', category: 'religious' },
+    { name: 'Ulta Rath', bn: 'উল্টোরথ', type: 'LUNAR', bMonth: 2, tithi: 10, impact: 'medium', category: 'religious' },
+    
+    { name: 'Jhulan Yatra Start', bn: 'ঝুলনযাত্রা শুরু', type: 'LUNAR', bMonth: 3, tithi: 11, impact: 'minor', category: 'religious' },
+    { name: 'Rakhi Purnima', bn: 'রাখিপূর্ণিমা', type: 'LUNAR', bMonth: 3, tithi: 15, impact: 'medium', category: 'cultural' },
+    { name: 'Manasa Puja', bn: 'মনসা পূজা', type: 'FIXED_BN', bMonth: 4, bDay: 1, impact: 'medium', category: 'religious' },
     { name: 'Janmashtami', bn: 'জন্মাষ্টমী', type: 'LUNAR', bMonth: 4, tithi: 23, impact: 'major', category: 'religious' },
-    { name: 'Ganesh Chaturthi', bn: 'গণেশ চতুর্থী', type: 'LUNAR', bMonth: 4, tithi: 4, impact: 'medium', category: 'religious' },
+    { name: 'Vishwakarma Puja', bn: 'বিশ্বকর্মা পূজা', type: 'FIXED_GR', gMonth: 8, gDay: 17, impact: 'medium', category: 'cultural' },
     
     // Durga Puja
     { name: 'Mahalaya', bn: 'মহালয়া', type: 'LUNAR', bMonth: 5, tithi: 30, impact: 'medium', category: 'cultural' },
@@ -421,15 +428,16 @@ const EVENT_RULES = [
     { name: 'Maha Ashtami', bn: 'মহাষ্টমী (দুর্গাপূজা)', type: 'LUNAR', bMonth: 5, tithi: 8, impact: 'major', category: 'religious' },
     { name: 'Maha Navami', bn: 'মহানবমী (দুর্গাপূজা)', type: 'LUNAR', bMonth: 5, tithi: 9, impact: 'medium', category: 'religious' },
     { name: 'Vijaya Dashami', bn: 'বিজয়া দশমী (দুর্গাপূজা)', type: 'LUNAR', bMonth: 5, tithi: 10, impact: 'major', category: 'cultural' },
+    { name: 'Lakshmi Puja', bn: 'লক্ষ্মী পূজা', type: 'LUNAR', bMonth: 5, tithi: 15, impact: 'medium', category: 'religious' },
     
-    { name: 'Kojagari Lakshmi Puja', bn: 'লক্ষ্মী পূজা', type: 'LUNAR', bMonth: 5, tithi: 15, impact: 'medium', category: 'religious' },
     { name: 'Kali Puja / Diwali', bn: 'কালী পূজা', type: 'LUNAR', bMonth: 6, tithi: 30, impact: 'major', category: 'religious' },
     { name: 'Bhai Phonta', bn: 'ভাইফোঁটা', type: 'LUNAR', bMonth: 6, tithi: 17, impact: 'medium', category: 'cultural' },
     { name: 'Jagaddhatri Puja', bn: 'জগদ্ধাত্রী পূজা', type: 'LUNAR', bMonth: 6, tithi: 9, impact: 'medium', category: 'religious' },
     { name: 'Kartik Puja', bn: 'কার্তিক পূজা', type: 'FIXED_BN', bMonth: 6, bDay: 30, impact: 'medium', category: 'religious' },
     
-    { name: 'Guru Nanak Jayanti', bn: 'গুরু নানক জয়ন্তী', type: 'LUNAR', bMonth: 7, tithi: 15, impact: 'medium', category: 'religious' },
-    { name: 'Poush Parbon', bn: 'পৌষ সংক্রান্তি', type: 'FIXED_BN', bMonth: 8, bDay: 30, impact: 'medium', category: 'cultural' },
+    { name: 'Rash Yatra', bn: 'রাসযাত্রা', type: 'LUNAR', bMonth: 7, tithi: 15, impact: 'medium', category: 'religious' },
+    { name: 'Chhath Puja', bn: 'ছট পূজা', type: 'LUNAR', bMonth: 7, tithi: 6, impact: 'medium', category: 'religious' },
+    { name: 'Hanuman Jayanti', bn: 'হনুমান জয়ন্তী', type: 'LUNAR', bMonth: 11, tithi: 15, impact: 'medium', category: 'religious' },
     
     { name: 'Saraswati Puja', bn: 'সরস্বতী পূজা', type: 'LUNAR', bMonth: 10, tithi: 5, impact: 'minor', category: 'religious' },
     { name: 'Dol Purnima (Holi)', bn: 'দোল পূর্ণিমা', type: 'LUNAR', bMonth: 10, tithi: 15, impact: 'medium', category: 'cultural' },

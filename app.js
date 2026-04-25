@@ -3,7 +3,7 @@
  */
 
 // State
-let currentViewDate = new Date(); // Start with today
+let currentViewBYear, currentViewBMonthIndex;
 
 // DOM Elements
 const daysGrid = document.getElementById('daysGrid');
@@ -29,10 +29,15 @@ const modalEvents = document.getElementById('modalEvents');
 
 
 function init() {
+    // Initial State: Today's Bengali Date
+    const todayB = getBengaliDate(new Date());
+    currentViewBYear = todayB.year;
+    currentViewBMonthIndex = todayB.monthIndex;
+
     // Dynamic Versioning from version.js
     if (window.VERSION_CONFIG) {
         const footerVer = document.getElementById('footerVersion');
-        if (footerVer) footerVer.textContent = `v${VERSION_CONFIG.full}`;
+        if (footerVer) footerVer.textContent = `v${window.VERSION_CONFIG.full}`;
     }
 
     // Splash Screen Exit (Move to top for robustness)
@@ -51,46 +56,51 @@ function init() {
 
     renderCalendar();
 
-    // Event Listeners
-    gotoDateInput.addEventListener('change', (e) => {
+    // Event Listeners (using direct assignment to avoid duplicates on re-init)
+    gotoDateInput.onchange = (e) => {
         const selectedDate = new Date(e.target.value);
         if (!isNaN(selectedDate)) {
-            currentViewDate = selectedDate;
+            const b = getBengaliDate(selectedDate);
+            currentViewBYear = b.year;
+            currentViewBMonthIndex = b.monthIndex;
             renderCalendar();
         }
-    });
+    };
 
-    prevBtn.addEventListener('click', () => {
-        // To move to the previous BENGALI month, we subtract ~30 days
-        const currentBDate = getBengaliDate(currentViewDate);
-        let prevMonthDate = new Date(currentViewDate);
-        prevMonthDate.setDate(prevMonthDate.getDate() - 30);
-        currentViewDate = prevMonthDate;
+    prevBtn.onclick = () => {
+        currentViewBMonthIndex--;
+        if (currentViewBMonthIndex < 0) {
+            currentViewBMonthIndex = 11;
+            currentViewBYear--;
+        }
         renderCalendar();
-    });
+    };
 
-    nextBtn.addEventListener('click', () => {
-        // To move to the next BENGALI month, we add ~30 days
-        let nextMonthDate = new Date(currentViewDate);
-        nextMonthDate.setDate(nextMonthDate.getDate() + 30);
-        currentViewDate = nextMonthDate;
+    nextBtn.onclick = () => {
+        currentViewBMonthIndex++;
+        if (currentViewBMonthIndex > 11) {
+            currentViewBMonthIndex = 0;
+            currentViewBYear++;
+        }
         renderCalendar();
-    });
+    };
 
-    todayBtn.addEventListener('click', () => {
-        currentViewDate = new Date();
+    todayBtn.onclick = () => {
+        const todayB = getBengaliDate(new Date());
+        currentViewBYear = todayB.year;
+        currentViewBMonthIndex = todayB.monthIndex;
         renderCalendar();
-    });
+    };
 
-    gDateInput.addEventListener('change', (e) => {
-        const selectedDate = new Date(e.target.value);
-        if (!isNaN(selectedDate)) {
-            const bDate = getBengaliDate(selectedDate);
+    gDateInput.onchange = (e) => {
+        const d = new Date(e.target.value);
+        if (!isNaN(d)) {
+            const b = getBengaliDate(d);
             conversionResult.innerHTML = `
-                ${toBengaliDigit(bDate.day)} ${bDate.month.bn}, ${toBengaliDigit(bDate.year)}
+                ${toBengaliDigit(b.day)} ${b.month.bn}, ${toBengaliDigit(b.year)}
             `;
         }
-    });
+    };
 
     // Set default date in input
     gDateInput.valueAsDate = new Date();
@@ -114,11 +124,11 @@ function init() {
 }
 
 function renderCalendar() {
-    const bDate = getBengaliDate(currentViewDate);
-    const { startDayOfWeek, days } = getBengaliMonthDays(bDate.year, bDate.monthIndex);
+    const { startDayOfWeek, days } = getBengaliMonthDays(currentViewBYear, currentViewBMonthIndex);
+    const monthObj = BENGALI_MONTHS[currentViewBMonthIndex];
     
     // Update Month Display
-    monthBn.textContent = `${bDate.month.bn} ${toBengaliDigit(bDate.year)}`;
+    monthBn.textContent = `${monthObj.bn} ${toBengaliDigit(currentViewBYear)}`;
     
     const startGDate = days[0].gDate;
     const endGDate = days[days.length - 1].gDate;
@@ -152,12 +162,12 @@ function renderCalendar() {
     days.forEach(day => {
         const dayDiv = document.createElement('div');
         const dStr = getLocalDateStr(day.gDate);
-        const bDateForDay = { day: day.bDay, monthIndex: bDate.monthIndex, year: bDate.year };
+        const bDateForDay = { day: day.bDay, monthIndex: currentViewBMonthIndex, year: currentViewBYear };
         
         // Calculate events for Sunrise (6 AM) of this Bengali day to ensure Tithi alignment
         const sunriseDate = new Date(day.gDate);
         sunriseDate.setHours(6, 0, 0, 0);
-        const events = getEventsForDate(sunriseDate, bDateForDay);
+        const eventsForCell = getEventsForDate(sunriseDate, bDateForDay);
         
         dayDiv.className = 'day';
         dayDiv.setAttribute('data-date', dStr);
@@ -165,7 +175,7 @@ function renderCalendar() {
         if (dStr === todayStr) {
             dayDiv.classList.add('today');
         }
-        if (events.length > 0) {
+        if (eventsForCell.length > 0) {
             dayDiv.classList.add('has-event');
         }
 
@@ -181,15 +191,72 @@ function renderCalendar() {
         `;
 
         dayDiv.addEventListener('click', () => {
-            openDateModal(day.gDate, day.bDay, bDate.month.bn, bDate.year, events);
+            openDateModal(day.gDate, day.bDay, monthObj.bn, currentViewBYear, eventsForCell);
         });
 
         daysGrid.appendChild(dayDiv);
     });
 
-    renderEvents();
+    renderEvents(days);
     renderAuspiciousDates();
     if (window.lucide) window.lucide.createIcons();
+}
+
+function renderEvents(monthDays) {
+    if (!eventList) return;
+    eventList.innerHTML = '';
+    
+    // Filter events for the current viewed Bengali month
+    const monthEvents = [];
+    monthDays.forEach(day => {
+        const d = new Date(day.gDate);
+        d.setHours(6, 0, 0, 0);
+        const b = { day: day.bDay, monthIndex: currentViewBMonthIndex, year: currentViewBYear };
+        const evs = getEventsForDate(d, b);
+        
+        evs.forEach(e => {
+            // Strict monthly check: ensure the rule's intended monthly context matches reality
+            let isCurrentMonth = false;
+            if (e.type === 'FIXED_BN' || e.type === 'LUNAR') {
+                if (e.bMonth === currentViewBMonthIndex) isCurrentMonth = true;
+            } else if (e.type === 'FIXED_GR') {
+                // For Gregorian fixed dates, we check if they fall within this Bengali month's Gregorian range
+                isCurrentMonth = true; 
+            } else if (e.type === 'HIJRI') {
+                // For Hijri, if it's found on this day, it's relevant
+                isCurrentMonth = true;
+            }
+
+            if (isCurrentMonth && !monthEvents.find(ex => ex.name === e.name && ex.date === day.bDay)) {
+                monthEvents.push({ ...e, date: day.bDay, gDate: day.gDate });
+            }
+        });
+    });
+
+    if (monthEvents.length === 0) {
+        eventList.innerHTML = '<p class="no-events">এই মাসে কোন অনুষ্ঠান নেই</p>';
+        return;
+    }
+
+    monthEvents.sort((a, b) => a.date - b.date).forEach(ev => {
+        const item = document.createElement('div');
+        item.className = `event-item ${ev.impact || 'minor'}`;
+        item.innerHTML = `
+            <div class="event-date">
+                <span class="eb">${toBengaliDigit(ev.date)}</span>
+                <span class="em">${BENGALI_MONTHS[currentViewBMonthIndex].bn}</span>
+            </div>
+            <div class="event-info">
+                <div class="en-bn">${ev.bn}</div>
+                <div class="en-en">${ev.name}</div>
+            </div>
+        `;
+        item.addEventListener('click', () => {
+            const b = { day: ev.date, monthIndex: currentViewBMonthIndex, year: currentViewBYear };
+            openDateModal(ev.gDate, ev.date, BENGALI_MONTHS[currentViewBMonthIndex].bn, currentViewBYear, [ev]);
+        });
+        eventList.appendChild(item);
+    });
 }
 
 function renderAuspiciousDates() {
@@ -220,13 +287,13 @@ function renderAuspiciousDates() {
     auspiciousList.appendChild(timingsGroup);
 
     // 2. Show Month's Shubh Dates
-    
-    // Anchor Shubh Section to the currently viewed BENGALI month
-    const bDate = getBengaliDate(currentViewDate);
-    const shubhDates = PanjikaEngine.getAuspiciousDates(bDate.year, bDate.monthIndex);
+    const shubhDates = PanjikaEngine.getAuspiciousDates(currentViewBYear, currentViewBMonthIndex);
 
     if (shubhDates.length === 0) {
-        auspiciousList.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; padding: 0.5rem 0;">এই মাসে কোন শুভক্ষণ নেই</p>';
+        const msg = document.createElement('p');
+        msg.style.cssText = 'color: var(--text-muted); font-size: 0.85rem; padding: 0.5rem 0;';
+        msg.textContent = 'এই মাসে কোন শুভক্ষণ নেই';
+        auspiciousList.appendChild(msg);
         return;
     }
 
@@ -261,7 +328,9 @@ function renderAuspiciousDates() {
             `;
             
             row.onclick = () => {
-                currentViewDate = new Date(sd.gYear, sd.gMonth, sd.gDay);
+                const b = getBengaliDate(new Date(sd.gYear, sd.gMonth, sd.gDay));
+                currentViewBYear = b.year;
+                currentViewBMonthIndex = b.monthIndex;
                 renderCalendar();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
